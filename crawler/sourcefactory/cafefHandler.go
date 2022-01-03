@@ -1,84 +1,121 @@
 package sourcefactory
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
 
-	"github.com/chromedp/chromedp"
+	"github.com/gocolly/colly/v2"
 )
 
 type CafefSourceHandler struct {
 }
 
-func (sourceHandler CafefSourceHandler) GetData(stocks []string) {
-	// opts := append(chromedp.DefaultExecAllocatorOptions[:],
-	// 	chromedp.Flag("headless", false),
-	// 	chromedp.Flag("disable-gpu", false),
-	// 	chromedp.Flag("enable-automation", false),
-	// 	chromedp.Flag("disable-extensions", false),
-	// )
-
-	// allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	// defer cancel()
-
-	// // create context
-	// ctx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
-	// defer cancel()
-
-	// var res string
-	// log.Printf("let's get it")
-
-	// if err := chromedp.Run(ctx,
-	// 	chromedp.Navigate(`https://s.cafef.vn/Lich-su-giao-dich-FPT-1.chn`),
-	// 	chromedp.WaitVisible(`body > h1`),
-	// 	// chromedp.Click(`#divSortProduct`, chromedp.NodeVisible),
-	// 	// chromedp.Click(`#divSortProductOptions > ul > li:nth-child(2)`, chromedp.NodeVisible),
-	// 	// chromedp.Click(`div > ul > li`, chromedp.NodeVisible),
-	// 	// chromedp.WaitVisible(`body > footer`),
-	// 	chromedp.Text(`h1`, &res, chromedp.NodeVisible, chromedp.ByQuery),
-	// ); err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// log.Printf("Go's time.After example:\n%s", res)
+func (sourceHandler CafefSourceHandler) GetData(stocks []string, driver string) {
 	for _, stock := range stocks {
-		result, error := Chrome(stock, 0)
-		if error != nil {
-			log.Printf("Can not get data of %s", stock)
+		if driver == "chrome" {
+			result, error := GetCafefByChrome(stock, 0)
+			if error != nil {
+				log.Printf("Can not get data of %s", stock)
+			}
+			fmt.Println(result)
+		} else {
+			get(stock)
 		}
-		fmt.Println(result)
+
 	}
 
 }
 
-func Chrome(stock string, backday int) ([]string, error) {
-	ctx, cancel := chromedp.NewContext(context.Background())
-	defer cancel()
+func get(stock string) {
+	stockInfos := []StockInfo{}
+	url := "https://s.cafef.vn/Lich-su-giao-dich-" + stock + "-1.chn"
 
-	var url = `https://s.cafef.vn/Lich-su-giao-dich-` + stock + `-1.chn`
-	var res string
-	err := chromedp.Run(ctx,
-		chromedp.Navigate(url),
-		chromedp.Text(getNodeName(backday), &res, chromedp.NodeVisible),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
+	c := colly.NewCollector()
 
-	infos := strings.Fields(res)
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("Visiting", r.URL)
+	})
 
-	return infos, err
+	c.OnHTML("#ctl00_ContentPlaceHolder1_ctl03_rptData2_ctl01_itemTR", func(e *colly.HTMLElement) {
+		stockInfo := StockInfo{}
+		// data := strings.Fields(e.ChildText("td"))
+
+		e.ForEach("td", func(i int, el *colly.HTMLElement) {
+			if i > 11 {
+				return
+			}
+
+			switch i {
+			case 0:
+				stockInfo.Date = el.Text
+			case 1:
+				if value, err := convertResult(el.Text); err == nil {
+					stockInfo.AdjustedPrice = value
+				}
+			case 2:
+				if value, err := convertResult(el.Text); err == nil {
+					stockInfo.ClosedPrice = value
+				}
+			case 3:
+				stockInfo.Change = el.Text
+			case 5:
+				if value, err := convertResult(el.Text); err == nil {
+					stockInfo.StockOrderAmount = value
+				}
+			case 6:
+				if value, err := convertResult(el.Text); err == nil {
+					stockInfo.StockOrderValue = value
+				}
+			case 7:
+				if value, err := convertResult(el.Text); err == nil {
+					stockInfo.StockDealAmount = value
+				}
+			case 8:
+				if value, err := convertResult(el.Text); err == nil {
+					stockInfo.StockDealValue = value
+				}
+			case 9:
+				if value, err := convertResult(el.Text); err == nil {
+					stockInfo.OpenPrice = value
+				}
+
+			case 10:
+				if value, err := convertResult(el.Text); err == nil {
+					stockInfo.HighestPrice = value
+				}
+			case 11:
+				if value, err := convertResult(el.Text); err == nil {
+					stockInfo.LowestPrice = value
+				}
+			}
+		})
+		stockInfos = append(stockInfos, stockInfo)
+	})
+
+	c.OnScraped(func(r *colly.Response) {
+		data, err := json.Marshal(stockInfos)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println("Finished. Here is your data:", string(data))
+		}
+
+	})
+
+	c.Visit(url)
+
 }
 
-func getNodeName(backday int) string {
-	sub := strconv.Itoa(backday + 1)
-	if backday < 9 {
-		sub = "0" + strconv.Itoa(backday+1)
+func convertResult(s string) (float32, error) {
+	trimedSpace := strings.TrimSpace(s)
+	rs, err := strconv.ParseFloat(trimedSpace, 32)
+	if rs != 0 {
+		return float32(rs), err
 	}
-	node := `#ctl00_ContentPlaceHolder1_ctl03_rptData2_ctl` + sub + `_itemTR`
+	rs, err = strconv.ParseFloat(strings.Replace(trimedSpace, ",", "", -1), 32)
 
-	return node
+	return float32(rs), err
 }
