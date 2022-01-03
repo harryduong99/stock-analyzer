@@ -5,7 +5,7 @@ import (
 )
 
 type ISourceHandlerFactory interface {
-	GetData()
+	GetData([]string)
 }
 
 func GetSourceHandlerFactory(sourceType string) ISourceHandlerFactory {

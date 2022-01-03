@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/chromedp/chromedp"
@@ -12,7 +13,7 @@ import (
 type CafefSourceHandler struct {
 }
 
-func (sourceHandler CafefSourceHandler) GetData() {
+func (sourceHandler CafefSourceHandler) GetData(stocks []string) {
 	// opts := append(chromedp.DefaultExecAllocatorOptions[:],
 	// 	chromedp.Flag("headless", false),
 	// 	chromedp.Flag("disable-gpu", false),
@@ -43,16 +44,25 @@ func (sourceHandler CafefSourceHandler) GetData() {
 	// }
 
 	// log.Printf("Go's time.After example:\n%s", res)
+	for _, stock := range stocks {
+		result, error := Chrome(stock, 0)
+		if error != nil {
+			log.Printf("Can not get data of %s", stock)
+		}
+		fmt.Println(result)
+	}
 
-	// create context
+}
+
+func Chrome(stock string, backday int) ([]string, error) {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
 
-	// run task list
+	var url = `https://s.cafef.vn/Lich-su-giao-dich-` + stock + `-1.chn`
 	var res string
 	err := chromedp.Run(ctx,
-		chromedp.Navigate(`https://s.cafef.vn/Lich-su-giao-dich-FPT-1.chn`),
-		chromedp.Text(`#ctl00_ContentPlaceHolder1_ctl03_rptData2_ctl01_itemTR`, &res, chromedp.NodeVisible),
+		chromedp.Navigate(url),
+		chromedp.Text(getNodeName(backday), &res, chromedp.NodeVisible),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -60,7 +70,15 @@ func (sourceHandler CafefSourceHandler) GetData() {
 
 	infos := strings.Fields(res)
 
-	fmt.Println(infos, len(infos))
+	return infos, err
+}
 
-	log.Println(strings.TrimSpace(res))
+func getNodeName(backday int) string {
+	sub := strconv.Itoa(backday + 1)
+	if backday < 9 {
+		sub = "0" + strconv.Itoa(backday+1)
+	}
+	node := `#ctl00_ContentPlaceHolder1_ctl03_rptData2_ctl` + sub + `_itemTR`
+
+	return node
 }

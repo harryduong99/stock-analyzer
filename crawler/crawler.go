@@ -5,5 +5,10 @@ import (
 )
 
 func Crawl(source string) {
-	sourcefactory.GetSourceHandlerFactory(source).GetData()
+	targets := getTargets()
+	sourcefactory.GetSourceHandlerFactory(source).GetData(targets)
+}
+
+func getTargets() []string {
+	return []string{"FPT", "FLC", "VPB", "TCB", "VCB", "HPG"}
 }
