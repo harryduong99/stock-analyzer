@@ -4,4 +4,7 @@ const (
 	CAFEF     = "cafef"
 	VNDIRECT  = "vndirect"
 	VIETSTOCK = "vietstock"
+
+	DB_NAME   = "stock_analyzer"
+	COL_STOCK = "stock_daily_infos"
 )

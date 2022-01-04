@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 
+	"github.com/duongnam99/stock-analyzer/models"
+	"github.com/duongnam99/stock-analyzer/repository"
 	"github.com/gocolly/colly/v2"
 )
 
@@ -24,13 +27,11 @@ func (sourceHandler CafefSourceHandler) GetData(stocks []string, driver string) 
 		} else {
 			get(stock)
 		}
-
 	}
-
 }
 
 func get(stock string) {
-	stockInfos := []StockInfo{}
+	stockInfos := []models.StockInfo{}
 	url := "https://s.cafef.vn/Lich-su-giao-dich-" + stock + "-1.chn"
 
 	c := colly.NewCollector()
@@ -40,7 +41,7 @@ func get(stock string) {
 	})
 
 	c.OnHTML("#ctl00_ContentPlaceHolder1_ctl03_rptData2_ctl01_itemTR", func(e *colly.HTMLElement) {
-		stockInfo := StockInfo{}
+		stockInfo := models.StockInfo{}
 		// data := strings.Fields(e.ChildText("td"))
 
 		e.ForEach("td", func(i int, el *colly.HTMLElement) {
@@ -52,42 +53,42 @@ func get(stock string) {
 			case 0:
 				stockInfo.Date = el.Text
 			case 1:
-				if value, err := convertResult(el.Text); err == nil {
+				if value, err := convertResultToFloat(el.Text); err == nil {
 					stockInfo.AdjustedPrice = value
 				}
 			case 2:
-				if value, err := convertResult(el.Text); err == nil {
+				if value, err := convertResultToFloat(el.Text); err == nil {
 					stockInfo.ClosedPrice = value
 				}
 			case 3:
 				stockInfo.Change = el.Text
 			case 5:
-				if value, err := convertResult(el.Text); err == nil {
+				if value, err := convertResultToInt(el.Text); err == nil {
 					stockInfo.StockOrderAmount = value
 				}
 			case 6:
-				if value, err := convertResult(el.Text); err == nil {
+				if value, err := convertResultToInt(el.Text); err == nil {
 					stockInfo.StockOrderValue = value
 				}
 			case 7:
-				if value, err := convertResult(el.Text); err == nil {
+				if value, err := convertResultToInt(el.Text); err == nil {
 					stockInfo.StockDealAmount = value
 				}
 			case 8:
-				if value, err := convertResult(el.Text); err == nil {
+				if value, err := convertResultToInt(el.Text); err == nil {
 					stockInfo.StockDealValue = value
 				}
 			case 9:
-				if value, err := convertResult(el.Text); err == nil {
+				if value, err := convertResultToFloat(el.Text); err == nil {
 					stockInfo.OpenPrice = value
 				}
 
 			case 10:
-				if value, err := convertResult(el.Text); err == nil {
+				if value, err := convertResultToFloat(el.Text); err == nil {
 					stockInfo.HighestPrice = value
 				}
 			case 11:
-				if value, err := convertResult(el.Text); err == nil {
+				if value, err := convertResultToFloat(el.Text); err == nil {
 					stockInfo.LowestPrice = value
 				}
 			}
@@ -100,7 +101,10 @@ func get(stock string) {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			fmt.Println("Finished. Here is your data:", string(data))
+			storingErr := repository.StockRepoistory.StoreStocks(stockInfos)
+			if storingErr != nil {
+				fmt.Println("Finished. Here is your data:", string(data))
+			}
 		}
 
 	})
@@ -109,13 +113,16 @@ func get(stock string) {
 
 }
 
-func convertResult(s string) (float32, error) {
+func convertResultToFloat(s string) (float64, error) {
 	trimedSpace := strings.TrimSpace(s)
 	rs, err := strconv.ParseFloat(trimedSpace, 32)
-	if rs != 0 {
-		return float32(rs), err
-	}
-	rs, err = strconv.ParseFloat(strings.Replace(trimedSpace, ",", "", -1), 32)
+	return math.Round(float64(rs)*100) / 100, err
+}
 
-	return float32(rs), err
+func convertResultToInt(s string) (int, error) {
+	trimedSpace := strings.TrimSpace(s)
+
+	rs, err := strconv.Atoi(strings.Replace(trimedSpace, ",", "", -1))
+
+	return rs, err
 }
