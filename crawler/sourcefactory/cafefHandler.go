@@ -42,7 +42,7 @@ func get(stock string) {
 
 	c.OnHTML("#ctl00_ContentPlaceHolder1_ctl03_rptData2_ctl01_itemTR", func(e *colly.HTMLElement) {
 		stockInfo := models.StockInfo{}
-		// data := strings.Fields(e.ChildText("td"))
+		stockInfo.Code = stock
 
 		e.ForEach("td", func(i int, el *colly.HTMLElement) {
 			if i > 11 {

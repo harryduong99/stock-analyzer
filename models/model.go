@@ -4,6 +4,7 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type StockInfo struct {
 	ID               primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"` // tag golang
+	Code             string             `json:"code" bson:"code"`
 	Date             string             `json:"date" bson:"date"`
 	AdjustedPrice    float64            `json:"adjusted_price" bson:"adjusted_price"`
 	ClosedPrice      float64            `json:"closed_price" bson:"closed_price"`
