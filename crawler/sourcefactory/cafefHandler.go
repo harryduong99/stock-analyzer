@@ -16,7 +16,7 @@ import (
 type CafefSourceHandler struct {
 }
 
-func (sourceHandler CafefSourceHandler) GetData(stocks []string, driver string) {
+func (sourceHandler CafefSourceHandler) GetData(stocks []string, totalDays int, driver string) {
 	for _, stock := range stocks {
 		if driver == "chrome" {
 			result, error := GetCafefByChrome(stock, 0)
@@ -25,12 +25,12 @@ func (sourceHandler CafefSourceHandler) GetData(stocks []string, driver string) 
 			}
 			fmt.Println(result)
 		} else {
-			get(stock)
+			get(stock, totalDays)
 		}
 	}
 }
 
-func get(stock string) {
+func get(stock string, totalDays int) {
 	stockInfos := []models.StockInfo{}
 	url := "https://s.cafef.vn/Lich-su-giao-dich-" + stock + "-1.chn"
 
@@ -40,70 +40,76 @@ func get(stock string) {
 		fmt.Println("Visiting", r.URL)
 	})
 
-	c.OnHTML("#ctl00_ContentPlaceHolder1_ctl03_rptData2_ctl01_itemTR", func(e *colly.HTMLElement) {
+	c.OnHTML("#GirdTable2", func(e *colly.HTMLElement) {
 		stockInfo := models.StockInfo{}
 		stockInfo.Code = stock
-
-		e.ForEach("td", func(i int, el *colly.HTMLElement) {
-			if i > 11 {
+		e.ForEach("tr", func(i int, el *colly.HTMLElement) {
+			if i > totalDays+1 {
 				return
 			}
+			if i > 1 {
+				el.ForEach("td", func(i int, ef *colly.HTMLElement) {
+					if i > 11 {
+						return
+					}
 
-			switch i {
-			case 0:
-				stockInfo.Date = el.Text
-			case 1:
-				if value, err := convertResultToFloat(el.Text); err == nil {
-					stockInfo.AdjustedPrice = value
-				}
-			case 2:
-				if value, err := convertResultToFloat(el.Text); err == nil {
-					stockInfo.ClosedPrice = value
-				}
-			case 3:
-				stockInfo.Change = el.Text
-			case 5:
-				if value, err := convertResultToInt(el.Text); err == nil {
-					stockInfo.StockOrderAmount = value
-				}
-			case 6:
-				if value, err := convertResultToInt(el.Text); err == nil {
-					stockInfo.StockOrderValue = value
-				}
-			case 7:
-				if value, err := convertResultToInt(el.Text); err == nil {
-					stockInfo.StockDealAmount = value
-				}
-			case 8:
-				if value, err := convertResultToInt(el.Text); err == nil {
-					stockInfo.StockDealValue = value
-				}
-			case 9:
-				if value, err := convertResultToFloat(el.Text); err == nil {
-					stockInfo.OpenPrice = value
-				}
+					switch i {
+					case 0:
+						stockInfo.Date = ef.Text
+					case 1:
+						if value, err := convertResultToFloat(ef.Text); err == nil {
+							stockInfo.AdjustedPrice = value
+						}
+					case 2:
+						if value, err := convertResultToFloat(ef.Text); err == nil {
+							stockInfo.ClosedPrice = value
+						}
+					case 3:
+						stockInfo.Change = ef.Text
+					case 5:
+						if value, err := convertResultToInt(ef.Text); err == nil {
+							stockInfo.StockOrderAmount = value
+						}
+					case 6:
+						if value, err := convertResultToInt(ef.Text); err == nil {
+							stockInfo.StockOrderValue = value
+						}
+					case 7:
+						if value, err := convertResultToInt(ef.Text); err == nil {
+							stockInfo.StockDealAmount = value
+						}
+					case 8:
+						if value, err := convertResultToInt(ef.Text); err == nil {
+							stockInfo.StockDealValue = value
+						}
+					case 9:
+						if value, err := convertResultToFloat(ef.Text); err == nil {
+							stockInfo.OpenPrice = value
+						}
 
-			case 10:
-				if value, err := convertResultToFloat(el.Text); err == nil {
-					stockInfo.HighestPrice = value
-				}
-			case 11:
-				if value, err := convertResultToFloat(el.Text); err == nil {
-					stockInfo.LowestPrice = value
-				}
+					case 10:
+						if value, err := convertResultToFloat(ef.Text); err == nil {
+							stockInfo.HighestPrice = value
+						}
+					case 11:
+						if value, err := convertResultToFloat(ef.Text); err == nil {
+							stockInfo.LowestPrice = value
+						}
+					}
+				})
+				stockInfos = append(stockInfos, stockInfo)
 			}
 		})
-		stockInfos = append(stockInfos, stockInfo)
 	})
 
 	c.OnScraped(func(r *colly.Response) {
-		data, err := json.Marshal(stockInfos)
+		_, err := json.Marshal(stockInfos)
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			storingErr := repository.StockRepoistory.StoreStocks(stockInfos)
-			if storingErr != nil {
-				fmt.Println("Finished. Here is your data:", string(data))
+			storingErr := repository.StockRepository.StoreStocks(stockInfos)
+			if storingErr == nil {
+				fmt.Println("Finished")
 			}
 		}
 

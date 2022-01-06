@@ -17,3 +17,8 @@ type StockInfo struct {
 	HighestPrice     float64            `json:"higest_price" bson:"higest_price"`
 	LowestPrice      float64            `json:"lowest_price" bson:"lowest_price"`
 }
+
+type StockAdmin struct {
+	ID   primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Code string             `json:"code" bson:"code"`
+}
