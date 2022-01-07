@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	mail "github.com/duongnam99/stock-analyzer/httpcore/mail"
 	"github.com/duongnam99/stock-analyzer/models"
 	"github.com/duongnam99/stock-analyzer/repository"
 	"github.com/sdcoffey/big"
@@ -15,8 +14,6 @@ import (
 )
 
 func Analyze() {
-	mail.Send()
-	return
 	series := techan.NewTimeSeries()
 	stocks := getStockByTime("HPG", 10)
 
