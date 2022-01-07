@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"github.com/duongnam99/stock-analyzer/crawler/sourcefactory"
+	"github.com/duongnam99/stock-analyzer/repository"
 )
 
 func Crawl(source string, totalDays int) {
@@ -10,6 +11,10 @@ func Crawl(source string, totalDays int) {
 }
 
 func getTargets() []string {
-	// return []string{"FPT", "FLC", "VPB", "TCB", "VCB", "HPG"}
-	return []string{"FPT"}
+	stocks := repository.StockAdminRepository.AllStockAdmin()
+	var result []string
+	for _, stock := range stocks {
+		result = append(result, stock.Code)
+	}
+	return result
 }

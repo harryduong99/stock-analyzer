@@ -7,13 +7,13 @@ import (
 
 	"github.com/duongnam99/stock-analyzer/analyzer"
 	"github.com/duongnam99/stock-analyzer/crawler"
-	"github.com/duongnam99/stock-analyzer/databasedriver"
 	"github.com/joho/godotenv"
 )
 
 func init() {
-	loadEnv()
-	databasedriver.Mongo.ConnectDatabase()
+	// loadEnv()
+	// databasedriver.Mongo.ConnectDatabase()
+	// httpcore.InitRoutes()
 }
 
 func main() {

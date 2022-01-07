@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	mail "github.com/duongnam99/stock-analyzer/httpcore/mail"
 	"github.com/duongnam99/stock-analyzer/models"
 	"github.com/duongnam99/stock-analyzer/repository"
 	"github.com/sdcoffey/big"
@@ -14,8 +15,10 @@ import (
 )
 
 func Analyze() {
+	mail.Send()
+	return
 	series := techan.NewTimeSeries()
-	stocks := getStockByTime("FPT", 10)
+	stocks := getStockByTime("HPG", 10)
 
 	var dataset [][]string
 	layout := "02/01/2006"
