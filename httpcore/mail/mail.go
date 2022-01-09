@@ -1,10 +1,8 @@
 package mail
 
 import (
-	"bytes"
 	"crypto/tls"
 	"fmt"
-	"html/template"
 	"log"
 	"math"
 	"net"
@@ -16,6 +14,7 @@ import (
 
 	"github.com/duongnam99/stock-analyzer/analyzer"
 	"github.com/duongnam99/stock-analyzer/config"
+	"github.com/duongnam99/stock-analyzer/httpcore/admin"
 )
 
 func SendAnalyzeResult(results []analyzer.AnalyzeResult) {
@@ -35,7 +34,7 @@ func SendAnalyzeResult(results []analyzer.AnalyzeResult) {
 		data = append(data, strconv.FormatFloat(math.Round(stock.FluctuatedPrice*100), 'f', -1, 64)+"%")
 		dataToMail = append(dataToMail, data)
 	}
-	body := ParseTemplate(rootPath+"/httpcore/mail/template/analyze_result.html", map[string]interface{}{"stocks": dataToMail})
+	body := admin.ParseTemplate(rootPath+"/httpcore/mail/template/analyze_result.html", map[string]interface{}{"stocks": dataToMail})
 
 	Send(subject, body, config.EMAIL_TARGET, true)
 }
@@ -124,16 +123,4 @@ func Send(subj string, body string, toMail string, isHtml bool) {
 	}
 
 	c.Quit()
-}
-
-func ParseTemplate(fileName string, data interface{}) string {
-	t, err := template.ParseFiles(fileName)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	buffer := new(bytes.Buffer)
-	if err = t.Execute(buffer, data); err != nil {
-		log.Fatalln(err)
-	}
-	return buffer.String()
 }
