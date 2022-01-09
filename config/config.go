@@ -1,6 +1,13 @@
 package config
 
 const (
+	EMAIL_TARGET          = "nam.duongminh99@gmail.com"
+	EMAIL_SENDER          = "bynstaysystem@gmail.com"
+	EMAIL_SENDER_NAME     = "Harry's stock bot"
+	EMAIL_SENDER_PASSWORD = "fifygnlxziosqgjs"
+	EMAIL_HOST            = "smtp.gmail.com"
+	EMAIL_PORT            = "465"
+
 	CAFEF     = "cafef"
 	VNDIRECT  = "vndirect"
 	VIETSTOCK = "vietstock"

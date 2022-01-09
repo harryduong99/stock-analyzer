@@ -15,7 +15,8 @@ func InitRoutes() {
 	// r.HandleFunc("/api/stocks/{id}", getBook).Methods("GET")
 	r.HandleFunc("/api/v1/stocks", crudstock.Store).Methods("POST")
 	// r.HandleFunc("/api/stocks/{id}", updateBook).Methods("PUT")
-	// r.HandleFunc("/api/stocks/{id}", deleteBook).Methods("DELETE")
+	// r.HandleFunc("/api/v1/stocks/{id}", crudstock.Delete).Methods("DELETE")
+	r.HandleFunc("/api/v1/stocks/{code}", crudstock.DeleteByCode).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":6868", r))
 }

@@ -13,20 +13,62 @@ import (
 	"github.com/sdcoffey/techan"
 )
 
-func Analyze() {
+type AnalyzeResult struct {
+	Code                          string
+	OpenPrice                     float64
+	AdjustClosedPrice             float64
+	YesterdayAdjustPrice          float64
+	DayBeforeYesterdayAdjustPrice float64
+	Change                        string
+	FluctuatedAmount              float64
+	FluctuatedPrice               float64
+}
+
+func Analyze() []AnalyzeResult {
+	var results []AnalyzeResult
+	var stockInfos []models.StockInfo
+	stocks := repository.StockAdminRepository.AllStockAdmin()
+	for _, stock := range stocks {
+		stockInfos = repository.StockRepository.GetAndSort(context.Background(), stock.Code, 3, true)
+		if len(stockInfos) == 0 {
+			continue
+		}
+		result := AnalyzeResult{}
+		result.Code = stockInfos[0].Code
+		result.OpenPrice = stockInfos[0].OpenPrice
+		result.AdjustClosedPrice = stockInfos[0].AdjustedPrice
+		result.YesterdayAdjustPrice = stockInfos[1].AdjustedPrice
+		result.DayBeforeYesterdayAdjustPrice = stockInfos[2].AdjustedPrice
+		result.Change = stockInfos[0].Change
+		result.FluctuatedAmount = GetFluctuatedFromAverageAmount(stock.Code, 10)
+		result.FluctuatedPrice = GetFluctuatedFromAveragePrice(stock.Code, 10)
+		results = append(results, result)
+	}
+	return results
+}
+
+func getStockByTime(stock string, totalDays int) []models.StockInfo {
+	return repository.StockRepository.GetStockDates(
+		context.Background(),
+		map[string]interface{}{"code": stock},
+		totalDays,
+	)
+}
+
+func Temp() {
 	series := techan.NewTimeSeries()
 	stocks := getStockByTime("HPG", 10)
 
 	var dataset [][]string
-	layout := "02/01/2006"
+	// layout := "02/01/2006"
 
 	set := []string{}
 	for _, stock := range stocks {
-		t, err := time.Parse(layout, stock.Date)
-		if err != nil {
-			log.Fatalln("Error while parsing date :", err)
-		}
-		set = append(set, strconv.Itoa(int(t.Unix())))
+		// t, err := time.Parse(layout, stock.Date)
+		// if err != nil {
+		// 	log.Fatalln("Error while parsing date :", err)
+		// }
+		// set = append(set, strconv.Itoa(int(t.Unix())))
 		set = append(set, fmt.Sprintf("%f", stock.OpenPrice))
 		set = append(set, fmt.Sprintf("%f", stock.ClosedPrice))
 		set = append(set, fmt.Sprintf("%f", stock.HighestPrice))
@@ -51,12 +93,17 @@ func Analyze() {
 		series.AddCandle(candle)
 	}
 
+	indicator := techan.NewMACDIndicator(techan.NewClosePriceIndicator(series), 12, 26)
+
+	// log.Fatalln(macd)
+	// assert.NotNil(t, macd)
+
 	// closePrices := techan.NewClosePriceIndicator(series)
 	// movingAverage := techan.NewEMAIndicator(closePrices, 10) // Create an exponential moving average with a window of 10
 
 	// log.Fatalln(movingAverage.Calculate(0).FormattedString(2))
 
-	indicator := techan.NewClosePriceIndicator(series)
+	// indicator := techan.NewClosePriceIndicator(series)
 
 	// record trades on this object
 	record := techan.NewTradingRecord()
@@ -82,12 +129,4 @@ func Analyze() {
 
 	result := strategy.ShouldEnter(0, record) // returns false
 	log.Fatalln(result)
-}
-
-func getStockByTime(stock string, totalDays int) []models.StockInfo {
-	return repository.StockRepository.GetStockDates(
-		context.Background(),
-		map[string]interface{}{"code": stock},
-		totalDays,
-	)
 }

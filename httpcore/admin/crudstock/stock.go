@@ -6,6 +6,8 @@ import (
 
 	"github.com/duongnam99/stock-analyzer/models"
 	"github.com/duongnam99/stock-analyzer/repository"
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func Store(w http.ResponseWriter, r *http.Request) {
@@ -18,6 +20,29 @@ func Store(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(stockAdmin)
+}
+
+func DeleteByCode(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	// get params
+	var params = mux.Vars(r)
+
+	result := repository.StockAdminRepository.DeleteOneByCode(params["code"])
+	json.NewEncoder(w).Encode(result)
+}
+
+func Delete(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	// get params
+	var params = mux.Vars(r)
+
+	// string to primitve.ObjectID
+	id, err := primitive.ObjectIDFromHex(params["id"])
+	if err != nil {
+		return
+	}
+	result := repository.StockAdminRepository.DeleteOneById(id)
+	json.NewEncoder(w).Encode(result)
 }
 
 func GetAll(w http.ResponseWriter, r *http.Request) {

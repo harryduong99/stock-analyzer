@@ -8,6 +8,7 @@ import (
 	databasedriver "github.com/duongnam99/stock-analyzer/databasedriver"
 	"github.com/duongnam99/stock-analyzer/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type StockAdminRepo struct{}
@@ -53,4 +54,25 @@ func (stockRepo *StockAdminRepo) StoreStockAdmin(stock models.StockAdmin) error 
 	}
 
 	return nil
+}
+
+func (stockRepo *StockAdminRepo) DeleteOneById(id primitive.ObjectID) bool {
+	collection := databasedriver.Mongo.ConnectCollection(config.DB_NAME, config.COL_STOCK_ADMIN)
+
+	filter := bson.M{"_id": id}
+
+	_, err := collection.DeleteOne(context.TODO(), filter)
+	return err == nil
+}
+
+func (stockRepo *StockAdminRepo) DeleteOneByCode(code string) bool {
+	var stock models.StockAdmin
+	collection := databasedriver.Mongo.ConnectCollection(config.DB_NAME, config.COL_STOCK_ADMIN)
+	if err := collection.FindOne(context.Background(), bson.M{"code": code}).Decode(&stock); err != nil {
+		log.Fatal(err)
+	}
+
+	result := stockRepo.DeleteOneById(stock.ID)
+
+	return result
 }

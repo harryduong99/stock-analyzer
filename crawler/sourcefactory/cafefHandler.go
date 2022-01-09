@@ -7,14 +7,18 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/duongnam99/stock-analyzer/models"
 	"github.com/duongnam99/stock-analyzer/repository"
 	"github.com/gocolly/colly/v2"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CafefSourceHandler struct {
 }
+
+const shortForm = "02/01/2006"
 
 func (sourceHandler CafefSourceHandler) GetData(stocks []string, totalDays int, driver string) {
 	for _, stock := range stocks {
@@ -55,7 +59,10 @@ func get(stock string, totalDays int) {
 
 					switch i {
 					case 0:
-						stockInfo.Date = ef.Text
+						// stockInfo.Date = ef.Text
+						// preParsing := strings.Replace(ef.Text, "-", "/", -1)
+						dt, _ := time.Parse(shortForm, ef.Text)
+						stockInfo.Date = primitive.NewDateTimeFromTime(dt)
 					case 1:
 						if value, err := convertResultToFloat(ef.Text); err == nil {
 							stockInfo.AdjustedPrice = value
