@@ -51,6 +51,7 @@ func get(stock string, totalDays int) {
 			if i > totalDays+1 {
 				return
 			}
+
 			if i > 1 {
 				el.ForEach("td", func(i int, ef *colly.HTMLElement) {
 					if i > 11 {

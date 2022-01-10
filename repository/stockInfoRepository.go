@@ -9,6 +9,7 @@ import (
 	"github.com/duongnam99/stock-analyzer/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -40,7 +41,6 @@ func (stockRepo *StockRepo) StoreStocks(stocks []models.StockInfo) error {
 			docs = append(docs, bbytes)
 		}
 	}
-
 	_, err := collection.InsertMany(context.Background(), docs)
 
 	if err != nil {
@@ -53,11 +53,12 @@ func (stockRepo *StockRepo) StoreStocks(stocks []models.StockInfo) error {
 func (stockRepo *StockRepo) IsExsiting(ctx context.Context, code string, date primitive.DateTime) bool {
 	collection := databasedriver.Mongo.ConnectCollection(config.DB_NAME, config.COL_STOCK)
 	var stock models.StockInfo
-	if err := collection.FindOne(ctx, bson.M{"code": code, "date": date}).Decode(&stock); err != nil {
+	data := collection.FindOne(ctx, bson.M{"code": code, "date": date})
+	err := data.Decode(&stock)
+	if err == mongo.ErrNoDocuments {
 		return false
 	}
 	return true
-
 }
 
 func (stockRepo *StockRepo) GetStock(ctx context.Context, params map[string]interface{}) (models.StockInfo, error) {
@@ -75,7 +76,7 @@ func (stockRepo *StockRepo) GetLastDayStock(ctx context.Context, code string) mo
 	var stock models.StockInfo
 	collection := databasedriver.Mongo.ConnectCollection(config.DB_NAME, config.COL_STOCK)
 
-	opts := options.FindOne().SetSort(bson.M{"$date": -1})
+	opts := options.FindOne().SetSort(bson.M{"date": -1})
 	if err := collection.FindOne(ctx, bson.M{"code": code}, opts).Decode(&stock); err != nil {
 		log.Fatal(err)
 	}
@@ -88,7 +89,7 @@ func (stockRepo *StockRepo) GetAndSort(ctx context.Context, code string, limit i
 	var stocks []models.StockInfo
 	collection := databasedriver.Mongo.ConnectCollection(config.DB_NAME, config.COL_STOCK)
 
-	opts := options.Find().SetSort(bson.M{"$date": -1}).SetLimit(int64(limit))
+	opts := options.Find().SetSort(bson.M{"date": -1}).SetLimit(int64(11))
 	cur, err := collection.Find(ctx, bson.M{"code": code}, opts)
 
 	if err != nil {
@@ -128,7 +129,7 @@ func (stockRepo *StockRepo) GetStockDates(ctx context.Context, params map[string
 	var stock models.StockInfo
 	var stocks []models.StockInfo
 
-	option := options.Find().SetLimit(int64(limit))
+	option := options.Find().SetSort(bson.M{"date": -1}).SetLimit(int64(limit))
 	collection := databasedriver.Mongo.ConnectCollection(config.DB_NAME, config.COL_STOCK)
 
 	cur, err := collection.Find(ctx, bson.M{

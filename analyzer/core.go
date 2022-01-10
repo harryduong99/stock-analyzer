@@ -29,7 +29,6 @@ func GetFluctuatedFromAverageAmount(code string, totalDays int) float64 {
 	)
 
 	amount := lastdayStock.StockDealAmount + lastdayStock.StockOrderAmount
-
 	return math.Round(((float64(amount)-averageAmount)/averageAmount)*100) / 100
 }
 
