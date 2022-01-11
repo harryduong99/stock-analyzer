@@ -36,7 +36,7 @@ func (stockRepo *StockRepo) StoreStocks(stocks []models.StockInfo) error {
 	docs := []interface{}{}
 
 	for _, stock := range stocks {
-		if !StockRepository.IsExsiting(context.Background(), stock.Code, stock.Date) {
+		if !StockRepository.IsStockInfoExisting(context.Background(), stock.Code, stock.Date) {
 			bbytes, _ := bson.Marshal(stock)
 			docs = append(docs, bbytes)
 		}
@@ -50,7 +50,7 @@ func (stockRepo *StockRepo) StoreStocks(stocks []models.StockInfo) error {
 	return nil
 }
 
-func (stockRepo *StockRepo) IsExsiting(ctx context.Context, code string, date primitive.DateTime) bool {
+func (stockRepo *StockRepo) IsStockInfoExisting(ctx context.Context, code string, date primitive.DateTime) bool {
 	collection := databasedriver.Mongo.ConnectCollection(config.DB_NAME, config.COL_STOCK)
 	var stock models.StockInfo
 	data := collection.FindOne(ctx, bson.M{"code": code, "date": date})

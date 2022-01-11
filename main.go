@@ -22,18 +22,20 @@ func init() {
 }
 
 func main() {
+	if len(os.Args) == 1 {
+		httpcore.InitRoutes()
+	}
+
 	if getAction() == "crawl" {
 		crawler.Crawl(getSource(), getTotalDays())
+		return
 	}
 
 	if getAction() == "analyze" {
 		crawler.Crawl(getSource(), getTotalDays())
 		results := analyzer.Analyze()
 		mail.SendAnalyzeResult(results)
-	}
-
-	if getAction() == "serve" {
-		httpcore.InitRoutes()
+		return
 	}
 }
 

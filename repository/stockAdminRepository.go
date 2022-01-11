@@ -9,6 +9,7 @@ import (
 	"github.com/duongnam99/stock-analyzer/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type StockAdminRepo struct{}
@@ -47,12 +48,14 @@ func (stockRepo *StockAdminRepo) StoreStockAdmin(stock models.StockAdmin) error 
 	collection := databasedriver.Mongo.ConnectCollection(config.DB_NAME, config.COL_STOCK_ADMIN)
 
 	bbytes, _ := bson.Marshal(stock)
-	_, err := collection.InsertOne(context.Background(), bbytes)
+	if !StockAdminRepository.IsStockAdminExisting(context.Background(), stock.Code) {
+		_, err := collection.InsertOne(context.Background(), bbytes)
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
-		return err
+		return nil
 	}
-
 	return nil
 }
 
@@ -75,4 +78,15 @@ func (stockRepo *StockAdminRepo) DeleteOneByCode(code string) bool {
 	result := stockRepo.DeleteOneById(stock.ID)
 
 	return result
+}
+
+func (stockRepo *StockAdminRepo) IsStockAdminExisting(ctx context.Context, code string) bool {
+	collection := databasedriver.Mongo.ConnectCollection(config.DB_NAME, config.COL_STOCK_ADMIN)
+	var stock models.StockInfo
+	data := collection.FindOne(ctx, bson.M{"code": code})
+	err := data.Decode(&stock)
+	if err == mongo.ErrNoDocuments {
+		return false
+	}
+	return true
 }
