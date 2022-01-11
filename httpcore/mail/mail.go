@@ -34,7 +34,10 @@ func SendAnalyzeResult(results []analyzer.AnalyzeResult) {
 		data = append(data, strconv.FormatFloat(math.Round(stock.FluctuatedPrice*100), 'f', -1, 64)+"%")
 		dataToMail = append(dataToMail, data)
 	}
-	body := admin.ParseTemplate(rootPath+"/httpcore/mail/template/analyze_result.html", map[string]interface{}{"stocks": dataToMail})
+	body := admin.ParseTemplate(rootPath+"/httpcore/mail/template/analyze_result.html", map[string]interface{}{
+		"stocks":     dataToMail,
+		"report_url": os.Getenv("APP_URL") + "/stock/report",
+	})
 
 	Send(subject, body, config.EMAIL_TARGET, true)
 }
@@ -58,15 +61,10 @@ func Send(subj string, body string, toMail string, isHtml bool) {
 	for k, v := range headers {
 		message += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
-	// if isHtml {
-	// 	message += body
-	// } else {
+
 	message += "\r\n" + body
-	// }
-
-	// log.Fatalln(message)
-
 	// Connect to the SMTP Server
+
 	servername := config.EMAIL_HOST + ":" + config.EMAIL_PORT
 
 	host, _, _ := net.SplitHostPort(servername)

@@ -2,4 +2,4 @@
 
 ## Run
 
-`go run main.go cafef`
+`go run main.go analyze cafef 10`

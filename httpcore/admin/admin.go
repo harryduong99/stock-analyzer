@@ -31,7 +31,10 @@ func Report(w http.ResponseWriter, r *http.Request) {
 		data = append(data, strconv.FormatFloat(math.Round(stock.FluctuatedPrice*100), 'f', -1, 64)+"%")
 		dataToMail = append(dataToMail, data)
 	}
-	body := ParseTemplate(rootPath+"/httpcore/admin/template/analyze_result.html", map[string]interface{}{"stocks": dataToMail})
+	body := ParseTemplate(rootPath+"/httpcore/admin/views/analyze_result.html", map[string]interface{}{
+		"stocks":     dataToMail,
+		"report_url": os.Getenv("APP_URL") + "/stock/report",
+	})
 
 	fmt.Fprint(w, body)
 }
