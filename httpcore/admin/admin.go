@@ -32,8 +32,7 @@ func Report(w http.ResponseWriter, r *http.Request) {
 		dataToMail = append(dataToMail, data)
 	}
 	body := ParseTemplate(rootPath+"/httpcore/admin/views/analyze_result.html", map[string]interface{}{
-		"stocks":     dataToMail,
-		"report_url": os.Getenv("APP_URL") + "/stock/report",
+		"stocks": dataToMail,
 	})
 
 	fmt.Fprint(w, body)
