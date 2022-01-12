@@ -2,6 +2,7 @@ package main
 
 // * * * * * cd work/src/github.com/duongnam99/stock-analyzer && ./stock-analyzer analyze
 // 0 0 * * 1,2,3,4,5 <user> <command>
+// 10 16 * * 1-5 /path_to_script
 
 import (
 	"log"
@@ -28,14 +29,12 @@ func main() {
 
 	if getAction() == "crawl" {
 		crawler.Crawl(getSource(), getTotalDays())
-		return
 	}
 
 	if getAction() == "analyze" {
 		crawler.Crawl(getSource(), getTotalDays())
 		results := analyzer.Analyze()
 		mail.SendAnalyzeResult(results)
-		return
 	}
 }
 
