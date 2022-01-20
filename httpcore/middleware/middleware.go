@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 	"os"
 
@@ -14,7 +13,6 @@ func AdminMiddleware() mux.MiddlewareFunc {
 			if r.Header.Get("x-api-key") == os.Getenv("X-API-KEY") {
 				h.ServeHTTP(w, r)
 			}
-			log.Printf("<-- %d %s", 403, http.StatusText(http.StatusForbidden))
 		})
 	}
 }

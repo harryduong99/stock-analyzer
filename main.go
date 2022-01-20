@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/duongnam99/stock-analyzer/analyzer"
+	"github.com/duongnam99/stock-analyzer/config"
 	"github.com/duongnam99/stock-analyzer/crawler"
 	"github.com/duongnam99/stock-analyzer/databasedriver"
 	"github.com/duongnam99/stock-analyzer/httpcore"
@@ -32,7 +33,10 @@ func main() {
 	}
 
 	if getAction() == "analyze" {
-		crawler.Crawl(getSource(), getTotalDays())
+		totalDays, _ := strconv.Atoi(os.Args[2])
+		crawler.Crawl(config.CAFEF, totalDays)
+		crawler.Crawl(config.VIETSTOCK, totalDays)
+
 		results := analyzer.Analyze()
 		mail.SendAnalyzeResult(results)
 	}

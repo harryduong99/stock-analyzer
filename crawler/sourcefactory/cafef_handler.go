@@ -15,10 +15,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const formatDMY = "02/01/2006"
+
 type CafefSourceHandler struct {
 }
-
-const shortForm = "02/01/2006"
 
 func (sourceHandler CafefSourceHandler) GetData(stocks []string, totalDays int, driver string) {
 	for _, stock := range stocks {
@@ -29,12 +29,12 @@ func (sourceHandler CafefSourceHandler) GetData(stocks []string, totalDays int, 
 			}
 			fmt.Println(result)
 		} else {
-			get(stock, totalDays)
+			getCafef(stock, totalDays)
 		}
 	}
 }
 
-func get(stock string, totalDays int) {
+func getCafef(stock string, totalDays int) {
 	stockInfos := []models.StockInfo{}
 	url := "https://s.cafef.vn/Lich-su-giao-dich-" + stock + "-1.chn"
 
@@ -62,7 +62,7 @@ func get(stock string, totalDays int) {
 					case 0:
 						// stockInfo.Date = ef.Text
 						// preParsing := strings.Replace(ef.Text, "-", "/", -1)
-						dt, _ := time.Parse(shortForm, ef.Text)
+						dt, _ := time.Parse(formatDMY, ef.Text)
 						stockInfo.Date = primitive.NewDateTimeFromTime(dt)
 					case 1:
 						if value, err := convertResultToFloat(ef.Text); err == nil {
@@ -117,7 +117,7 @@ func get(stock string, totalDays int) {
 		} else {
 			storingErr := repository.StockRepository.StoreStocks(stockInfos)
 			if storingErr == nil {
-				fmt.Println("Finished")
+				fmt.Println("Crawled " + stock)
 			}
 		}
 

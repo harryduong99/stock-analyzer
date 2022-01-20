@@ -17,7 +17,7 @@ func GetCafefByChrome(stock string, totalDays int) ([]string, error) {
 	var res string
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(url),
-		chromedp.Text(getNodeName(totalDays), &res, chromedp.NodeVisible),
+		chromedp.Text(getCafefNodeName(totalDays), &res, chromedp.NodeVisible),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -28,7 +28,7 @@ func GetCafefByChrome(stock string, totalDays int) ([]string, error) {
 	return infos, err
 }
 
-func getNodeName(totalDays int) string {
+func getCafefNodeName(totalDays int) string {
 	sub := strconv.Itoa(totalDays + 1)
 	if totalDays < 9 {
 		sub = "0" + strconv.Itoa(totalDays+1)

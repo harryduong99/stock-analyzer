@@ -16,7 +16,7 @@ func GetSourceHandlerFactory(sourceType string) ISourceHandlerFactory {
 	case config.VNDIRECT:
 
 	case config.VIETSTOCK:
-
+		return VietstockSourceHandler{}
 	}
 
 	return nil
