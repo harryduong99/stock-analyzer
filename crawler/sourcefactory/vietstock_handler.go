@@ -26,18 +26,34 @@ func (sourceHandler VietstockSourceHandler) GetData(stocks []string, totalDays i
 }
 
 func getVietstock(stock string, totalDays int) {
-	ctx, cancel := chromedp.NewContext(context.Background())
+	options := []chromedp.ExecAllocatorOption{
+		chromedp.Flag("headless", true), // debug using
+		chromedp.Flag("blink-settings", "imagesEnabled=false"),
+		chromedp.UserAgent(`Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36`),
+	}
+	//Initialization parameters, first pass an empty data
+	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
+
+	c, _ := chromedp.NewExecAllocator(context.Background(), options...)
+
+	// create context
+	chromeCtx, cancel := chromedp.NewContext(c, chromedp.WithLogf(log.Printf))
+	//Execute an empty task to create a chrome instance in advance
+	chromedp.Run(chromeCtx, make([]chromedp.Action, 0, 1)...)
+
+	//Create a context with a timeout of 40s
+	timeoutCtx, cancel := context.WithTimeout(chromeCtx, 40*time.Second)
 	defer cancel()
 
 	var url = `https://finance.vietstock.vn/` + stock + `/transaction-statistics.htm`
 	fmt.Println("Visiting", url)
 	var res string
-	err := chromedp.Run(ctx,
+	err := chromedp.Run(timeoutCtx,
 		chromedp.Navigate(url),
 		chromedp.Text(getVietstockNodeName(1), &res, chromedp.NodeVisible),
 	)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
 	infos := strings.Fields(res)
