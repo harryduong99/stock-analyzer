@@ -7,6 +7,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/duongnam99/stock-analyzer/models"
@@ -17,10 +18,15 @@ import (
 
 const formatDMY = "02/01/2006"
 
+var (
+	cafefWaitGroup = sync.WaitGroup{}
+)
+
 type CafefSourceHandler struct {
 }
 
 func (sourceHandler CafefSourceHandler) GetData(stocks []string, totalDays int, driver string) {
+	cafefWaitGroup.Add(len(stocks))
 	for _, stock := range stocks {
 		if driver == "chrome" {
 			result, error := GetCafefByChrome(stock, 0)
@@ -32,6 +38,7 @@ func (sourceHandler CafefSourceHandler) GetData(stocks []string, totalDays int, 
 			getCafef(stock, totalDays)
 		}
 	}
+	cafefWaitGroup.Wait()
 }
 
 func getCafef(stock string, totalDays int) {
@@ -119,6 +126,7 @@ func getCafef(stock string, totalDays int) {
 			if storingErr == nil {
 				fmt.Println("Crawled " + stock)
 			}
+			cafefWaitGroup.Done()
 		}
 
 	})

@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/chromedp/chromedp"
@@ -16,13 +17,19 @@ import (
 
 const formatMDY = "01/02/2006"
 
+var (
+	vietstockWaitGroup = sync.WaitGroup{}
+)
+
 type VietstockSourceHandler struct {
 }
 
 func (sourceHandler VietstockSourceHandler) GetData(stocks []string, totalDays int, driver string) {
+	vietstockWaitGroup.Add(len(stocks))
 	for _, stock := range stocks {
-		getVietstock(stock, totalDays)
+		go getVietstock(stock, totalDays)
 	}
+	vietstockWaitGroup.Wait()
 }
 
 func getVietstock(stock string, totalDays int) {
@@ -58,6 +65,7 @@ func getVietstock(stock string, totalDays int) {
 
 	infos := strings.Fields(res)
 	storeVietstockData(stock, infos)
+	vietstockWaitGroup.Done()
 }
 
 func storeVietstockData(stock string, infos []string) ([]string, error) {
