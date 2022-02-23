@@ -35,7 +35,7 @@ func Analyze() []AnalyzeResult {
 	stocks := repository.StockAdminRepository.AllStockAdmin()
 	waitGroup.Add(len(stocks))
 	for _, stock := range stocks {
-		go ProcessStock(stock)
+		go ProcessStock(stock) // problem : may cause too many goroutine!
 	}
 	waitGroup.Wait()
 	return analyzeResult
