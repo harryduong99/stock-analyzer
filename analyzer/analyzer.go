@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/duongnam99/stock-analyzer/models"
@@ -24,27 +25,41 @@ type AnalyzeResult struct {
 	FluctuatedPrice               float64
 }
 
+var (
+	waitGroup     = sync.WaitGroup{}
+	lock          = sync.Mutex{}
+	analyzeResult = []AnalyzeResult{}
+)
+
 func Analyze() []AnalyzeResult {
-	var results []AnalyzeResult
-	var stockInfos []models.StockInfo
 	stocks := repository.StockAdminRepository.AllStockAdmin()
+	waitGroup.Add(len(stocks))
 	for _, stock := range stocks {
-		stockInfos = repository.StockRepository.GetAndSort(context.Background(), stock.Code, 3, true)
-		if len(stockInfos) == 0 {
-			continue
-		}
-		result := AnalyzeResult{}
-		result.Code = stockInfos[0].Code
-		result.OpenPrice = stockInfos[0].OpenPrice
-		result.AdjustClosedPrice = stockInfos[0].AdjustedPrice
-		result.YesterdayAdjustPrice = stockInfos[1].AdjustedPrice
-		result.DayBeforeYesterdayAdjustPrice = stockInfos[2].AdjustedPrice
-		result.Change = stockInfos[0].Change
-		result.FluctuatedAmount = GetFluctuatedFromAverageAmount(stock.Code, 10)
-		result.FluctuatedPrice = GetFluctuatedFromAveragePrice(stock.Code, 10)
-		results = append(results, result)
+		go ProcessStock(stock)
 	}
-	return results
+	waitGroup.Wait()
+	return analyzeResult
+}
+
+func ProcessStock(stock models.StockAdmin) {
+	stockInfos := repository.StockRepository.GetAndSort(context.Background(), stock.Code, 3, true)
+	if len(stockInfos) == 0 {
+		waitGroup.Done()
+		return
+	}
+	result := AnalyzeResult{}
+	result.Code = stockInfos[0].Code
+	result.OpenPrice = stockInfos[0].OpenPrice
+	result.AdjustClosedPrice = stockInfos[0].AdjustedPrice
+	result.YesterdayAdjustPrice = stockInfos[1].AdjustedPrice
+	result.DayBeforeYesterdayAdjustPrice = stockInfos[2].AdjustedPrice
+	result.Change = stockInfos[0].Change
+	result.FluctuatedAmount = GetFluctuatedFromAverageAmount(stock.Code, 10)
+	result.FluctuatedPrice = GetFluctuatedFromAveragePrice(stock.Code, 10)
+	lock.Lock()
+	analyzeResult = append(analyzeResult, result)
+	lock.Unlock()
+	waitGroup.Done()
 }
 
 func getStockByTime(stock string, totalDays int) []models.StockInfo {
