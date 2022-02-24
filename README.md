@@ -2,7 +2,7 @@
 
 ## Run
 
-- To get crawl all information for last 3 days, then analyze and send the email, run:
+- To crawl all information for last 3 days, then analyze and send the email, run:
 
 `go run main.go analyze 3`
 

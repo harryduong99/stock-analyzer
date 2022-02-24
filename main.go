@@ -36,7 +36,8 @@ func main() {
 		totalDays, _ := strconv.Atoi(os.Args[2])
 		crawler.Crawl(config.CAFEF, totalDays)
 		crawler.Crawl(config.VIETSTOCK, totalDays)
-
+		
+		// todo: thinking about concurrency for crawling and analyzing
 		results := analyzer.Analyze()
 		mail.SendAnalyzeResult(results)
 	}
