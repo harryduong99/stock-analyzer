@@ -17,3 +17,5 @@
 - `vietstock`
 
 - In the future, we will have `vndirect`
+
+- Crawling vietstock need to use headless browser so we will crawl cafef first, then vietstock will be crawled to fulfill the data that cafef is missing (or not)
